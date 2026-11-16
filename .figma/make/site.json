@@ -1,0 +1,10 @@
+{
+  "description": "An interactive, gradient-themed portfolio that showcases a professional’s skills, projects, education, and academic achievements in a fun, engaging scroll experience.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
