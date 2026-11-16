@@ -174,8 +174,8 @@ const certifications = [
 const navItems = ["about", "skills", "projects", "experience", "education", "contact"];
 
 const projectScreenshots: Record<string, string> = {
-  skin: "",
-  oneself: "",
+  skin: "/projects/skinai.png",
+  oneself: "/projects/oneself.png",
 };
 
 function ProductMockup({ type }: { type: string }) {
@@ -186,7 +186,7 @@ function ProductMockup({ type }: { type: string }) {
   return (
     <div
       className={`screenshot-mock ${isMobile ? "screenshot-phone" : "screenshot-browser"}`}
-      aria-label={`${projectName} screenshot placeholder`}
+      aria-label={`${projectName} application preview`}
     >
       {isMobile ? (
         <div className="device-speaker" />
@@ -255,11 +255,20 @@ function ProjectCard({
 
 function ProjectDetail({ project, onClose }: { project: Project; onClose: () => void }) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const closingRef = useRef(false);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const requestClose = () => {
+    if (closingRef.current) return;
+    closingRef.current = true;
+    setIsClosing(true);
+    window.setTimeout(onClose, 320);
+  };
 
   useEffect(() => {
     document.body.classList.add("modal-open");
     closeRef.current?.focus();
-    const closeOnEscape = (event: KeyboardEvent) => event.key === "Escape" && onClose();
+    const closeOnEscape = (event: KeyboardEvent) => event.key === "Escape" && requestClose();
     window.addEventListener("keydown", closeOnEscape);
     return () => {
       document.body.classList.remove("modal-open");
@@ -268,11 +277,16 @@ function ProjectDetail({ project, onClose }: { project: Project; onClose: () => 
   }, [onClose]);
 
   return (
-    <div className="project-modal" role="dialog" aria-modal="true" aria-labelledby="case-title">
-      <button className="modal-backdrop" onClick={onClose} aria-label="Close project detail" />
+    <div
+      className={`project-modal ${isClosing ? "is-closing" : ""}`}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="case-title"
+    >
+      <button className="modal-backdrop" onClick={requestClose} aria-label="Close project detail" />
       <div className="modal-panel">
         <div className={`modal-hero ${project.theme}`}>
-          <button ref={closeRef} className="modal-close" onClick={onClose} aria-label="Close">
+          <button ref={closeRef} className="modal-close" onClick={requestClose} aria-label="Close">
             <Icon name="close" />
           </button>
           <span className="section-kicker">CASE STUDY / {project.number}</span>
