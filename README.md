@@ -71,6 +71,7 @@ A mobile application for cycle tracking and personalized wellness guidance.
 - Contact form for professional enquiries
 
 **Built with:** React, TypeScript, Vite, CSS, custom SVG icons
+
 **Deployed on:** Vercel
 
 ---
