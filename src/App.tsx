@@ -354,8 +354,13 @@ export default function App() {
   const [activeSection, setActiveSection] = useState("about");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [contactStatus, setContactStatus] = useState<"idle" | "loading" | "success" | "error">(
+    "idle",
+  );
+  const [contactFeedback, setContactFeedback] = useState("");
   const cursorRef = useRef<HTMLDivElement>(null);
   const cursorDotRef = useRef<HTMLDivElement>(null);
+  const contactSubmittingRef = useRef(false);
 
   useEffect(() => {
     document.documentElement.dataset.theme = darkMode ? "dark" : "light";
@@ -420,14 +425,68 @@ export default function App() {
     setMenuOpen(false);
   };
 
-  const sendMessage = (event: FormEvent<HTMLFormElement>) => {
+  const sendMessage = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const subject = encodeURIComponent(`Portfolio enquiry from ${form.get("name")}`);
-    const body = encodeURIComponent(
-      `Name: ${form.get("name")}\nEmail: ${form.get("email")}\n\n${form.get("message")}`,
-    );
-    window.location.href = `mailto:shivikabhawsar030@gmail.com?subject=${subject}&body=${body}`;
+    if (contactSubmittingRef.current || contactStatus === "loading") return;
+
+    const formElement = event.currentTarget;
+    if (!formElement.reportValidity()) return;
+
+    const formData = new FormData(formElement);
+    const name = String(formData.get("name") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
+    const message = String(formData.get("message") ?? "").trim();
+    const accessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
+
+    if (!name || !email || !message) {
+      setContactStatus("error");
+      setContactFeedback("Please complete all fields before sending your message.");
+      return;
+    }
+
+    if (!accessKey) {
+      setContactStatus("error");
+      setContactFeedback("The contact form is temporarily unavailable. Please try again later.");
+      return;
+    }
+
+    contactSubmittingRef.current = true;
+    setContactStatus("loading");
+    setContactFeedback("Sending your message...");
+
+    try {
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          access_key: accessKey,
+          name,
+          email,
+          message,
+          subject: `Portfolio enquiry from ${name}`,
+          from_name: "Shivika Bhawsar Portfolio",
+        }),
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error("Web3Forms submission failed");
+      }
+
+      formElement.reset();
+      setContactStatus("success");
+      setContactFeedback("Thank you! Your message has been sent successfully.");
+    } catch {
+      setContactStatus("error");
+      setContactFeedback(
+        "Your message could not be sent. Please check your connection and try again.",
+      );
+    } finally {
+      contactSubmittingRef.current = false;
+    }
   };
 
   return (
@@ -712,13 +771,37 @@ export default function App() {
             </div>
           </div>
           <form className="contact-form reveal" onSubmit={sendMessage}>
+            <input
+              className="form-honeypot"
+              type="checkbox"
+              name="botcheck"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+            />
             <label>
               Your name
-              <input name="name" placeholder="Jane Smith" required />
+              <input
+                name="name"
+                placeholder="Jane Smith"
+                minLength={2}
+                maxLength={80}
+                autoComplete="name"
+                disabled={contactStatus === "loading"}
+                required
+              />
             </label>
             <label>
               Email address
-              <input name="email" type="email" placeholder="jane@company.com" required />
+              <input
+                name="email"
+                type="email"
+                placeholder="jane@company.com"
+                maxLength={120}
+                autoComplete="email"
+                disabled={contactStatus === "loading"}
+                required
+              />
             </label>
             <label>
               Message
@@ -726,13 +809,35 @@ export default function App() {
                 name="message"
                 rows={5}
                 placeholder="Tell me about the opportunity or idea..."
+                minLength={10}
+                maxLength={3000}
+                disabled={contactStatus === "loading"}
                 required
               />
             </label>
-            <button className="button primary" type="submit">
-              Send message <Icon name="arrow" />
+            <button
+              className="button primary"
+              type="submit"
+              disabled={contactStatus === "loading"}
+              aria-busy={contactStatus === "loading"}
+            >
+              {contactStatus === "loading" ? (
+                <>
+                  <span className="submit-spinner" aria-hidden="true" /> Sending...
+                </>
+              ) : (
+                <>
+                  Send message <Icon name="arrow" />
+                </>
+              )}
             </button>
-            <small>This opens your email app—your message is not stored.</small>
+            <small
+              className={`contact-form-status ${contactStatus}`}
+              role="status"
+              aria-live="polite"
+            >
+              {contactFeedback || "Your message will be sent securely through Web3Forms."}
+            </small>
           </form>
         </div>
         <footer className="section-shell">

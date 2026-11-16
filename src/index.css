@@ -889,7 +889,7 @@
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
   transition: transform 0.55s cubic-bezier(0.2, 0.75, 0.2, 1);
 }
@@ -900,10 +900,6 @@
 
 .screenshot-phone .screenshot-viewport img {
   object-position: center top;
-}
-
-.project-card:hover .screenshot-viewport img {
-  transform: scale(1.025);
 }
 
 .screenshot-placeholder {
@@ -1231,6 +1227,22 @@
   font-size: 12px;
 }
 
+.contact-form input:disabled,
+.contact-form textarea:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.contact-form .form-honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .contact-form input:focus,
 .contact-form textarea:focus {
   border-color: #967fff;
@@ -1247,12 +1259,45 @@
   color: #111019;
 }
 
+.contact-form .button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+  transform: none;
+}
+
+.submit-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(17, 16, 25, 0.25);
+  border-top-color: #111019;
+  border-radius: 50%;
+  animation: submit-spin 0.75s linear infinite;
+}
+
 .contact-form small {
   display: block;
   margin-top: 12px;
   color: #6f6a78;
   font-size: 8px;
   text-align: center;
+}
+
+.contact-form-status {
+  min-height: 12px;
+}
+
+.contact-form-status.success {
+  color: #70d9aa;
+}
+
+.contact-form-status.error {
+  color: #ff9ba8;
+}
+
+@keyframes submit-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 footer {
